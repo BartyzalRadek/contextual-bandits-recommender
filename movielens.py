@@ -53,6 +53,9 @@ class MovieLens:
         self.user_indexes = np.array(range(self.R.shape[0]))  # order of selection of ratings for batches in next epoch
         np.random.shuffle(self.user_indexes)  # iterate through the rating matrix randomly when selecting next batch
 
+        print('Statistics about self.R:')
+        self.get_statistics(self.R)
+
     def _augment_R(self, mode):
         """
         mode == 'binary'
@@ -71,7 +74,8 @@ class MovieLens:
         if mode == 'binary':
             R[R < self.pos_rating_threshold] = self.UNKNOWN_RATING_VAL
             R[R >= self.pos_rating_threshold] = self.POSITIVE_RATING_VAL
-            print("Binarized rating matrix. Ratings < {} turned to {}.".format(self.pos_rating_threshold, self.UNKNOWN_RATING_VAL))
+            print("Binarized rating matrix. Ratings < {} turned to {}.".format(self.pos_rating_threshold,
+                                                                               self.UNKNOWN_RATING_VAL))
         elif mode == 'binary_unknown':
             unknown_rating = self.UNKNOWN_RATING_VAL
             R[R == 0] = 999
@@ -79,7 +83,8 @@ class MovieLens:
             R[R == 999] = self.UNKNOWN_RATING_VAL
             R[R >= self.pos_rating_threshold] = self.POSITIVE_RATING_VAL
             print("Positive ratings (>={}) turned to {}, negative to {}, unknown to {}"
-                  .format(self.pos_rating_threshold, self.POSITIVE_RATING_VAL, self.NEGATIVE_RATING_VAL, self.UNKNOWN_RATING_VAL))
+                  .format(self.pos_rating_threshold, self.POSITIVE_RATING_VAL, self.NEGATIVE_RATING_VAL,
+                          self.UNKNOWN_RATING_VAL))
         elif mode == 'original':
             pass
         else:
@@ -88,6 +93,53 @@ class MovieLens:
 
         R_mask = R != unknown_rating
         return R, R_mask
+
+    def add_random_ratings(self, num_to_each_user=10):
+        """
+        Adds N random ratings to every user in np.copy(self.R).
+        :param num_to_each_user: Number of random (positive=1 or negative=-1)ratings to be added to each user.
+        :return: Copy of self.R with added ratings.
+        """
+        no_items = self.R.shape[1]
+        no_users = self.R.shape[0]
+        R = np.copy(self.R)
+        for u in range(no_users):
+            ids = np.random.randint(no_items, size=num_to_each_user)
+            new_ratings = np.random.randint(2, size=num_to_each_user) * 2 - np.ones(shape=(num_to_each_user,),
+                                                                                    dtype=int)
+            R[u][ids] = new_ratings
+            # print('ids:', ids)
+            # print('ratings:', ratings)
+            # print('R[u]:', self.R[u])
+        return R
+
+    def get_statistics(self, R):
+        total_rats = R.size
+        no_rats = len(R[R != self.UNKNOWN_RATING_VAL])
+        no_pos_rats = len(R[R == self.POSITIVE_RATING_VAL])
+        no_neg_rats = len(R[R == self.NEGATIVE_RATING_VAL])
+
+        user_pos_rats = np.zeros(shape=(R.shape[0],), dtype=int)
+        user_neg_rats = np.zeros(shape=(R.shape[0],), dtype=int)
+        for u in range(R.shape[0]):
+            user = R[u]
+            user_pos_rats[u] = len(user[user == self.POSITIVE_RATING_VAL])
+            user_neg_rats[u] = len(user[user == self.NEGATIVE_RATING_VAL])
+
+        user_pos_rats_avg = np.average(user_pos_rats)
+        user_neg_rats_avg = np.average(user_neg_rats)
+        user_pos_rats_std = np.std(user_pos_rats)
+        user_neg_rats_std = np.std(user_neg_rats)
+
+        print('Total number of ratings:  ', total_rats)
+        print('Known ratings:            ', no_rats)
+        print('Known positive ratings:   ', no_pos_rats)
+        print('Known negative ratings:   ', no_neg_rats)
+        print('Ratio of known ratings:   ', no_rats / total_rats)
+        print('Ratio of positive ratings:', no_pos_rats / total_rats)
+        print('Ratio of negative ratings:', no_neg_rats / total_rats)
+        print('Avg number of positive ratings per user: {} +- {}'.format(user_pos_rats_avg, user_pos_rats_std))
+        print('Avg number of negative ratings per user: {} +- {}'.format(user_neg_rats_avg, user_neg_rats_std))
 
     def _maybe_download_and_extract(self):
         if self.variant not in VARIANTS:
