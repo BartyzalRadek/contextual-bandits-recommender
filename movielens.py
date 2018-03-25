@@ -171,12 +171,13 @@ class MovieLens:
     def get_arm_feature_dim(self):
         return self.item_genres.shape[1] + self.R.shape[1]
 
-    def get_statistics(self, R):
+    def get_statistics(self):
         """
         Calculates various statistics about given matrix.
         :param R: Rating matrix to get stats about.
         :return: (user_pos_rats, user_neg_rats) = Arrays with numbers of pos/neg ratings per user.
         """
+        R = self.R
         total_rats = R.size
         no_rats = len(R[R != self.UNKNOWN_RATING_VAL])
         no_pos_rats = len(R[R == self.POSITIVE_RATING_VAL])
