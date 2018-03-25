@@ -113,6 +113,21 @@ class MovieLens:
             # print('R[u]:', self.R[u])
         return R
 
+    def get_features_of_current_arms(self, t, R):
+        """
+        Concatenates item features with user features.
+        :param t: Time step = index of user that is being recommended to.
+        :return: Matrix of (#arms x #feature_dims) for user t.
+        """
+
+        t = t % self.num_users
+        user_features = R[t]  # vector
+        user_features = np.tile(user_features, (self.num_items, 1))  # matrix where each row is R[t]
+        item_features = self.item_genres  # matrix
+        # arm_feature_dims = item_features.shape[1] + user_features.shape[0]
+        arm_features = np.concatenate((user_features, item_features), axis=1)
+        return arm_features
+
     def get_statistics(self, R):
         """
         Calculates various statistics about given matrix.
