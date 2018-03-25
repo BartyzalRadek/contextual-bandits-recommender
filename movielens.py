@@ -53,6 +53,7 @@ class MovieLens:
         self.user_indexes = np.array(range(self.R.shape[0]))  # order of selection of ratings for batches in next epoch
         np.random.shuffle(self.user_indexes)  # iterate through the rating matrix randomly when selecting next batch
 
+        self.arm_feature_dim = self.get_arm_feature_dim()
         print('Statistics about self.R:')
         self.get_statistics(self.R)
 
@@ -96,13 +97,13 @@ class MovieLens:
 
     def add_random_ratings(self, num_to_each_user=10):
         """
-        Adds N random ratings to every user in np.copy(self.R).
+        Adds N random ratings to every user in self.R.
         :param num_to_each_user: Number of random (positive=1 or negative=-1)ratings to be added to each user.
-        :return: Copy of self.R with added ratings.
+        :return: self.R with added ratings.
         """
         no_items = self.R.shape[1]
         no_users = self.R.shape[0]
-        R = np.copy(self.R)
+        R = self.R
         for u in range(no_users):
             ids = np.random.randint(no_items, size=num_to_each_user)
             new_ratings = np.random.randint(2, size=num_to_each_user) * 2 - np.ones(shape=(num_to_each_user,),
@@ -113,7 +114,46 @@ class MovieLens:
             # print('R[u]:', self.R[u])
         return R
 
-    def get_features_of_current_arms(self, t, R):
+    def recommend(self, user_id, item_id):
+        if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
+            return 1
+        elif self.R[user_id, item_id] == self.NEGATIVE_RATING_VAL:
+            return 0
+        else:
+            item_genres = self.item_genres[item_id]
+            user_ratings = self.R[user_id]
+            user_pos_rat_idxs = np.argwhere(user_ratings == self.POSITIVE_RATING_VAL)
+            user_neg_rat_idxs = np.argwhere(user_ratings == self.NEGATIVE_RATING_VAL)
+            num_known_ratings = len(user_pos_rat_idxs) + len(user_neg_rat_idxs)
+            genre_idxs = np.argwhere(item_genres == 1)
+
+            # Find how much user likes the genre of the recommended movie based on his previous ratings.
+            genre_likabilities = []
+            for genre_idx in genre_idxs:
+                genre_likability = 0
+                for item_idx in user_pos_rat_idxs:
+                    genre_likability += self.item_genres[item_idx][genre_idx]
+                for item_idx in user_neg_rat_idxs:
+                    genre_likability -= self.item_genres[item_idx][genre_idx]
+                genre_likability /= num_known_ratings
+                genre_likabilities.append(genre_likability)
+
+            genre_likabilities = np.array(genre_likabilities)
+
+            # how much user user_id likes the genre of the recommended item item_id
+            result_genre_likability = np.average(genre_likabilities)
+            if result_genre_likability < 0:
+                result_genre_likability = 0 # this could be replaced by small probability
+            approx_rating = np.random.binomial(n=1, p=result_genre_likability)
+
+            if approx_rating == 1:
+                self.R[user_id, item_id] = self.POSITIVE_RATING_VAL
+            else:
+                self.R[user_id, item_id] = self.NEGATIVE_RATING_VAL
+
+            return approx_rating
+
+    def get_features_of_current_arms(self, t):
         """
         Concatenates item features with user features.
         :param t: Time step = index of user that is being recommended to.
@@ -121,12 +161,15 @@ class MovieLens:
         """
 
         t = t % self.num_users
-        user_features = R[t]  # vector
+        user_features = self.R[t]  # vector
         user_features = np.tile(user_features, (self.num_items, 1))  # matrix where each row is R[t]
         item_features = self.item_genres  # matrix
         # arm_feature_dims = item_features.shape[1] + user_features.shape[0]
         arm_features = np.concatenate((user_features, item_features), axis=1)
         return arm_features
+
+    def get_arm_feature_dim(self):
+        return self.item_genres.shape[1] + self.R.shape[1]
 
     def get_statistics(self, R):
         """
