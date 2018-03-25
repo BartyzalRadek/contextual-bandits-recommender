@@ -114,6 +114,11 @@ class MovieLens:
         return R
 
     def get_statistics(self, R):
+        """
+        Calculates various statistics about given matrix.
+        :param R: Rating matrix to get stats about.
+        :return: (user_pos_rats, user_neg_rats) = Arrays with numbers of pos/neg ratings per user.
+        """
         total_rats = R.size
         no_rats = len(R[R != self.UNKNOWN_RATING_VAL])
         no_pos_rats = len(R[R == self.POSITIVE_RATING_VAL])
@@ -140,6 +145,7 @@ class MovieLens:
         print('Ratio of negative ratings:', no_neg_rats / total_rats)
         print('Avg number of positive ratings per user: {} +- {}'.format(user_pos_rats_avg, user_pos_rats_std))
         print('Avg number of negative ratings per user: {} +- {}'.format(user_neg_rats_avg, user_neg_rats_std))
+        return (user_pos_rats, user_neg_rats)
 
     def _maybe_download_and_extract(self):
         if self.variant not in VARIANTS:
