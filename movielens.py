@@ -55,7 +55,7 @@ class MovieLens:
 
         self.arm_feature_dim = self.get_arm_feature_dim()
         print('Statistics about self.R:')
-        self.get_statistics(self.R)
+        self.get_statistics()
 
     def _augment_R(self, mode):
         """
