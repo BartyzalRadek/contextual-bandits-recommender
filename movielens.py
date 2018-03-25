@@ -144,7 +144,8 @@ class MovieLens:
             result_genre_likability = np.average(genre_likabilities)
             if result_genre_likability < 0:
                 result_genre_likability = 0 # this could be replaced by small probability
-            approx_rating = np.random.binomial(n=1, p=result_genre_likability)
+
+            approx_rating = np.random.binomial(n=1, p=result_genre_likability) #Bernoulli coin toss
 
             if approx_rating == 1:
                 self.R[user_id, item_id] = self.POSITIVE_RATING_VAL
