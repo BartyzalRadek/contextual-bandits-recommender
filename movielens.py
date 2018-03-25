@@ -36,7 +36,9 @@ class MovieLens:
         np.random.seed(0)
         self.DATA_AUGMENTATION_MODES = ['binary', 'binary_unknown', 'original']
         self.variant = variant
-        self.UNKNOWN_RATING_VAL = -1
+        self.UNKNOWN_RATING_VAL = 0
+        self.POSITIVE_RATING_VAL = 1
+        self.NEGATIVE_RATING_VAL = -1
         self.data_augmentation_mode = data_augmentation_mode
         self.pos_rating_threshold = pos_rating_threshold  # positive rating threshold
 
@@ -67,17 +69,17 @@ class MovieLens:
         R = np.copy(self.orig_R)
         unknown_rating = 0
         if mode == 'binary':
-            R[R < self.pos_rating_threshold] = 0
-            R[R >= self.pos_rating_threshold] = 1
-            print("Binarized rating matrix. Ratings < {} turned to 0.".format(self.pos_rating_threshold))
+            R[R < self.pos_rating_threshold] = self.UNKNOWN_RATING_VAL
+            R[R >= self.pos_rating_threshold] = self.POSITIVE_RATING_VAL
+            print("Binarized rating matrix. Ratings < {} turned to {}.".format(self.pos_rating_threshold, self.UNKNOWN_RATING_VAL))
         elif mode == 'binary_unknown':
             unknown_rating = self.UNKNOWN_RATING_VAL
             R[R == 0] = 999
-            R[R < self.pos_rating_threshold] = 0
+            R[R < self.pos_rating_threshold] = self.NEGATIVE_RATING_VAL
             R[R == 999] = self.UNKNOWN_RATING_VAL
-            R[R >= self.pos_rating_threshold] = 1
-            print("Positive ratings (>={}) turned to 1, negative to 0, unknown to {}"
-                  .format(self.pos_rating_threshold, self.UNKNOWN_RATING_VAL))
+            R[R >= self.pos_rating_threshold] = self.POSITIVE_RATING_VAL
+            print("Positive ratings (>={}) turned to {}, negative to {}, unknown to {}"
+                  .format(self.pos_rating_threshold, self.POSITIVE_RATING_VAL, self.NEGATIVE_RATING_VAL, self.UNKNOWN_RATING_VAL))
         elif mode == 'original':
             pass
         else:
