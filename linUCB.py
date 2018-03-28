@@ -16,6 +16,7 @@ class LinUCB:
         self.dataset.add_random_ratings(num_to_each_user=5)
         self.alpha = alpha
         self.users_with_unrated_items = np.array(range(self.dataset.num_users))
+        self.monitored_user = np.random.choice(self.users_with_unrated_items)
         self.d = dataset.arm_feature_dim
         self.b = np.zeros(shape=(dataset.num_items, self.d))
 
@@ -61,8 +62,10 @@ class LinUCB:
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
-        if t == 5:
+        if t == self.monitored_user:
             print("User {} choosing item {} with reward {}".format(t, a_t, r_t))
+            if r_t == 1:
+                self.monitored_user = np.random.choice(self.users_with_unrated_items)
 
 
         x_t_at = arm_features[a_t]
