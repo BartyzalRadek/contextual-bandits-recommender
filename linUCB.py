@@ -61,6 +61,10 @@ class LinUCB:
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
+        if t == 5:
+            print("User {} choosing item {} with reward {}".format(t, a_t, r_t))
+
+
         x_t_at = arm_features[a_t]
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
         b[a_t] = b[a_t] + r_t * x_t_at
