@@ -28,23 +28,27 @@ class LinUCB:
         self.A = np.repeat(np.identity(self.d, dtype=self.A.dtype)[np.newaxis, :, :], dataset.num_items, axis=0)
         print("\nLinUCB successfully initialized.")
 
-    def choose_arm(self, t):
+    def choose_arm(self, t, unknown_item_ids):
         """
-        Choose an arm to pull = item to recommend to user t.
+        Choose an arm to pull = item to recommend to user t that he did not rate yet.
         :param t: User_id of user to recommend to.
+        :param unknown_item_ids: Indexes of items that user t has not rated yet.
         :return: Received reward for selected item = 1/0 = user liked/disliked item.
         """
         A = self.A
         b = self.b
         arm_features = self.dataset.get_features_of_current_arms(t=t)
         p_t = np.zeros(shape=(arm_features.shape[0],), dtype=float)
-        for a in range(arm_features.shape[0]):
+        p_t -= 9999 # I never want to select the already rated items
+        for a in unknown_item_ids: # iterate over all arms = items that that user has not rated yet
             x_ta = arm_features[a]
             A_a_inv = np.linalg.inv(A[a])
             theta_a = A_a_inv.dot(b[a])
             p_t[a] = theta_a.T.dot(x_ta) + self.alpha * np.sqrt(x_ta.T.dot(A_a_inv).dot(x_ta))
 
+
         # I want to randomly break ties, np.argmax return the first occurence of maximum.
+        # So I will get all occurences of the max and randomly select between them
         max_idxs = np.argwhere(p_t == np.max(p_t)).flatten()
         a_t = np.random.choice(max_idxs)  # idx of article to recommend to user t
 
@@ -69,10 +73,10 @@ class LinUCB:
 
             unknown_item_ids = self.dataset.get_uknown_items_of_user(user_id)
             if unknown_item_ids.size == 0:
-                print("User {} has no more unknown ratings, skipping him.")
+                print("User {} has no more unknown ratings, skipping him.".format(user_id))
                 continue
 
-            rewards.append(self.choose_arm(user_id))
+            rewards.append(self.choose_arm(user_id, unknown_item_ids))
             time_i = time.time() - start_time_i
             if verbosity >= 2:
                 print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users, rewards[i], time_i))
