@@ -2,7 +2,7 @@ from _commons import warn, error, create_dir_path
 import numpy as np
 
 class LinUCB:
-    def __init__(self, alpha, dataset):
+    def __init__(self, alpha, dataset, max_items=500):
         self.dataset = dataset
         self.alpha = alpha
         self.d = dataset.arm_feature_dim
@@ -13,7 +13,7 @@ class LinUCB:
         #    self.A[a] = np.identity(self.d, dtype=self.A.dtype)
 
         # More efficient way to create array of identity matrices of length num_items
-        print("Initializing matrix A of shape {} which will require {}MB of memory.".format(self.A.shape, self.A.size/1e6))
+        print("Initializing matrix A of shape {} which will require {}MB of memory.".format(self.A.shape, 8*self.A.size/1e6))
         self.A = np.tile(np.identity(self.d, dtype=self.A.dtype), (dataset.num_items, 1))
         print("Initialized matrix A of shape", self.A.shape)
 
