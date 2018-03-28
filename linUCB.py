@@ -15,6 +15,7 @@ class LinUCB:
         self.dataset.shrink(max_items)
         self.dataset.add_random_ratings(num_to_each_user=5)
         self.alpha = alpha
+        self.users_with_unrated_items = np.array(range(self.dataset.num_users))
         self.d = dataset.arm_feature_dim
         self.b = np.zeros(shape=(dataset.num_items, self.d))
 
@@ -46,13 +47,16 @@ class LinUCB:
             theta_a = A_a_inv.dot(b[a])
             p_t[a] = theta_a.T.dot(x_ta) + self.alpha * np.sqrt(x_ta.T.dot(A_a_inv).dot(x_ta))
 
+        max_p_t = np.max(p_t)
+        if max_p_t <= 0:
+            print("User {} has max p_t={}, p_t={}".format(t, max_p_t, p_t))
 
         # I want to randomly break ties, np.argmax return the first occurence of maximum.
         # So I will get all occurences of the max and randomly select between them
-        max_idxs = np.argwhere(p_t == np.max(p_t)).flatten()
+        max_idxs = np.argwhere(p_t == max_p_t).flatten()
         a_t = np.random.choice(max_idxs)  # idx of article to recommend to user t
 
-        r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0
+        r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
         x_t_at = arm_features[a_t]
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
@@ -67,13 +71,17 @@ class LinUCB:
         """
         rewards = []
         start_time = time.time()
+
         for i in range(self.dataset.num_users):
             start_time_i = time.time()
             user_id = self.dataset.get_next_user()
+            if user_id not in self.users_with_unrated_items:
+                continue
 
             unknown_item_ids = self.dataset.get_uknown_items_of_user(user_id)
             if unknown_item_ids.size == 0:
                 print("User {} has no more unknown ratings, skipping him.".format(user_id))
+                self.users_with_unrated_items = self.users_with_unrated_items[self.users_with_unrated_items != user_id]
                 continue
 
             rewards.append(self.choose_arm(user_id, unknown_item_ids))
@@ -91,6 +99,7 @@ class LinUCB:
         :param num_epochs: Number of epochs = iterating over all users.
         :return: List of average rewards per epoch.
         """
+        self.users_with_unrated_items = np.array(range(self.dataset.num_users))
         avg_rewards = np.zeros(shape=(num_epochs,), dtype=float)
         for i in range(num_epochs):
             avg_rewards[i], total_time = self.run_epoch(verbosity)

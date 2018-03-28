@@ -144,7 +144,8 @@ class MovieLens:
             # how much user user_id likes the genre of the recommended item item_id
             result_genre_likability = np.average(genre_likabilities)
             if result_genre_likability < 0:
-                result_genre_likability = 0  # this could be replaced by small probability
+                #print("User={}, item={}, genre likability={}".format(user_id, item_id, result_genre_likability))
+                result_genre_likability = 0.05  # this could be replaced by small probability
 
             approx_rating = np.random.binomial(n=1, p=result_genre_likability)  # Bernoulli coin toss
 
@@ -153,7 +154,8 @@ class MovieLens:
             else:
                 self.R[user_id, item_id] = self.NEGATIVE_RATING_VAL
 
-            return approx_rating
+            #return approx_rating
+            return result_genre_likability
 
     def get_features_of_current_arms(self, t):
         """
