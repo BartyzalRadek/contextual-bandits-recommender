@@ -61,18 +61,24 @@ class LinUCB:
         Call choose_arm() for each user in the dataset.
         :return: Average received reward.
         """
-        rewards = np.zeros(shape=(self.dataset.num_users,), dtype=float)
+        rewards = []
         start_time = time.time()
         for i in range(self.dataset.num_users):
             start_time_i = time.time()
             user_id = self.dataset.get_next_user()
-            rewards[i] = self.choose_arm(user_id)
+
+            unknown_item_ids = self.dataset.get_uknown_items_of_user(user_id)
+            if unknown_item_ids.size == 0:
+                print("User {} has no more unknown ratings, skipping him.")
+                continue
+
+            rewards.append(self.choose_arm(user_id))
             time_i = time.time() - start_time_i
             if verbosity >= 2:
                 print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users, rewards[i], time_i))
 
         total_time = time.time() - start_time
-        avg_reward = np.average(rewards)
+        avg_reward = np.average(np.array(rewards))
         return avg_reward, total_time
 
     def run(self, num_epochs, verbosity=1):

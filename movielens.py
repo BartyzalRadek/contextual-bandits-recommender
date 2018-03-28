@@ -94,6 +94,7 @@ class MovieLens:
             print("R will not be modified!")
 
         R_mask = R != unknown_rating
+        self.UNKNOWN_RATING_VAL = unknown_rating
         return R, R_mask
 
     def add_random_ratings(self, num_to_each_user=10):
@@ -171,6 +172,11 @@ class MovieLens:
 
     def get_arm_feature_dim(self):
         return self.item_genres.shape[1] + self.R.shape[1]
+
+    def get_uknown_items_of_user(self, user_id):
+        user_ratings = self.R[user_id]  # vector
+        unknown_item_ids = np.argwhere(user_ratings == self.UNKNOWN_RATING_VAL).flatten()
+        return unknown_item_ids
 
     def get_next_user(self):
         if self.current_user_idx == self.R.shape[0]:
