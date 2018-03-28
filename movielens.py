@@ -50,8 +50,9 @@ class MovieLens:
         self.R, self.R_mask = self._augment_R(mode=data_augmentation_mode)
         self.item_titles, self.item_genres = self._get_item_info()
 
-        self.user_indexes = np.array(range(self.R.shape[0]))  # order of selection of ratings for batches in next epoch
-        np.random.shuffle(self.user_indexes)  # iterate through the rating matrix randomly when selecting next batch
+        self.current_user_idx = 0 # How many users have I already returned in get_next_user()
+        self.user_indexes = np.array(range(self.R.shape[0]))  # order of selection of users to recommend to
+        np.random.shuffle(self.user_indexes)  # iterate through users randomly when selecting the next user
 
         self.arm_feature_dim = self.get_arm_feature_dim()
         print('Statistics about self.R:')
@@ -103,20 +104,19 @@ class MovieLens:
         """
         no_items = self.R.shape[1]
         no_users = self.R.shape[0]
-        R = self.R
         for u in range(no_users):
             ids = np.random.randint(no_items, size=num_to_each_user)
             new_ratings = np.random.randint(2, size=num_to_each_user) * 2 - np.ones(shape=(num_to_each_user,),
                                                                                     dtype=int)
-            R[u][ids] = new_ratings
+            self.R[u][ids] = new_ratings
             # print('ids:', ids)
             # print('ratings:', ratings)
             # print('R[u]:', self.R[u])
-        return R
+        return self.R
 
     def recommend(self, user_id, item_id):
         if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
-            return 1
+            return 1 # This will be exploited, don't recommend thing the user has already liked.
         elif self.R[user_id, item_id] == self.NEGATIVE_RATING_VAL:
             return 0
         else:
@@ -171,6 +171,15 @@ class MovieLens:
 
     def get_arm_feature_dim(self):
         return self.item_genres.shape[1] + self.R.shape[1]
+
+    def get_next_user(self):
+        if self.current_user_idx == self.R.shape[0]:
+            self.current_user_idx = 0
+            np.random.shuffle(self.user_indexes)
+
+        next_user_id = self.user_indexes[self.current_user_idx]
+        self.current_user_idx += 1
+        return next_user_id
 
     def get_statistics(self):
         """
