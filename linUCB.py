@@ -37,7 +37,8 @@ class LinUCB:
             theta_a = A_a_inv.dot(b[a])
             p_t[a] = theta_a.T.dot(x_ta) + self.alpha * np.sqrt(x_ta.T.dot(A_a_inv).dot(x_ta))
 
-        max_idxs = np.argwhere(p_t == np.max(p_t))  # I want to randomly break ties, np.argmax return the first occurence of maximum.
+        # I want to randomly break ties, np.argmax return the first occurence of maximum.
+        max_idxs = np.argwhere(p_t == np.max(p_t)).flatten()
         a_t = np.random.choice(max_idxs)  # idx of article to recommend to user t
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0
@@ -56,9 +57,11 @@ class LinUCB:
         rewards = np.zeros(shape=(self.dataset.num_users,), dtype=float)
         start_time = time.time()
         for i in range(self.dataset.num_users):
+            start_time_i = time.time()
             user_id = self.dataset.get_next_user()
-            reward = self.choose_arm(user_id)
-            rewards[i] = reward
+            rewards[i] = self.choose_arm(user_id)
+            time_i = time.time() - start_time_i
+            print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users, rewards[i], time_i))
 
         total_time = time.time() - start_time
         avg_reward = np.average(rewards)

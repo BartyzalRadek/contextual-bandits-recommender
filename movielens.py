@@ -122,10 +122,10 @@ class MovieLens:
         else:
             item_genres = self.item_genres[item_id]
             user_ratings = self.R[user_id]
-            user_pos_rat_idxs = np.argwhere(user_ratings == self.POSITIVE_RATING_VAL)
-            user_neg_rat_idxs = np.argwhere(user_ratings == self.NEGATIVE_RATING_VAL)
+            user_pos_rat_idxs = np.argwhere(user_ratings == self.POSITIVE_RATING_VAL).flatten()
+            user_neg_rat_idxs = np.argwhere(user_ratings == self.NEGATIVE_RATING_VAL).flatten()
             num_known_ratings = len(user_pos_rat_idxs) + len(user_neg_rat_idxs)
-            genre_idxs = np.argwhere(item_genres == 1)
+            genre_idxs = np.argwhere(item_genres == 1).flatten()
 
             # Find how much user likes the genre of the recommended movie based on his previous ratings.
             genre_likabilities = []
