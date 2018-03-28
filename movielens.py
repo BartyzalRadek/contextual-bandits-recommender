@@ -50,7 +50,7 @@ class MovieLens:
         self.R, self.R_mask = self._augment_R(mode=data_augmentation_mode)
         self.item_titles, self.item_genres = self._get_item_info()
 
-        self.current_user_idx = 0 # How many users have I already returned in get_next_user()
+        self.current_user_idx = 0  # How many users have I already returned in get_next_user()
         self.user_indexes = np.array(range(self.R.shape[0]))  # order of selection of users to recommend to
         np.random.shuffle(self.user_indexes)  # iterate through users randomly when selecting the next user
 
@@ -116,7 +116,7 @@ class MovieLens:
 
     def recommend(self, user_id, item_id):
         if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
-            return 1 # This will be exploited, don't recommend thing the user has already liked.
+            return 1  # This will be exploited, don't recommend thing the user has already liked.
         elif self.R[user_id, item_id] == self.NEGATIVE_RATING_VAL:
             return 0
         else:
@@ -143,9 +143,9 @@ class MovieLens:
             # how much user user_id likes the genre of the recommended item item_id
             result_genre_likability = np.average(genre_likabilities)
             if result_genre_likability < 0:
-                result_genre_likability = 0 # this could be replaced by small probability
+                result_genre_likability = 0  # this could be replaced by small probability
 
-            approx_rating = np.random.binomial(n=1, p=result_genre_likability) #Bernoulli coin toss
+            approx_rating = np.random.binomial(n=1, p=result_genre_likability)  # Bernoulli coin toss
 
             if approx_rating == 1:
                 self.R[user_id, item_id] = self.POSITIVE_RATING_VAL
@@ -185,10 +185,11 @@ class MovieLens:
         num_users = self.R.shape[0]
         num_items = self.R.shape[1]
         if max_items >= num_items:
-            warn("movielens.shrink() max_items={} is larger than number of items = {} => nothing will be done.".format(max_items, num_items))
+            warn("movielens.shrink() max_items={} is larger than number of items = {} => nothing will be done.".format(
+                max_items, num_items))
 
         shrink_ratio = num_items / max_items
-        max_users = num_users / shrink_ratio
+        max_users = int(num_users / shrink_ratio)
 
         self.R = self.R[0:max_users, 0:max_items]
         self.R_mask = self.R_mask[0:max_users, 0:max_items]
@@ -204,7 +205,6 @@ class MovieLens:
         print("Shrinked rating matrix from {} to {}.".format(self.orig_R.shape, self.R.shape))
         print("\nAfter shrinking:")
         self.get_statistics()
-
 
     def get_statistics(self):
         """

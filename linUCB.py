@@ -16,7 +16,7 @@ class LinUCB:
         # More efficient way to create array of identity matrices of length num_items
         print("Initializing matrix A of shape {} which will require {}MB of memory.".format(self.A.shape, 8*self.A.size/1e6))
         self.A = np.tile(np.identity(self.d, dtype=self.A.dtype), (dataset.num_items, 1))
-        print("LinUCB successfully initialized.")
+        print("\nLinUCB successfully initialized.")
 
     def choose_arm(self, t):
         A = self.A
