@@ -181,6 +181,31 @@ class MovieLens:
         self.current_user_idx += 1
         return next_user_id
 
+    def shrink(self, max_items):
+        num_users = self.R.shape[0]
+        num_items = self.R.shape[1]
+        if max_items >= num_items:
+            warn("movielens.shrink() max_items={} is larger than number of items = {} => nothing will be done.".format(max_items, num_items))
+
+        shrink_ratio = num_items / max_items
+        max_users = num_users / shrink_ratio
+
+        self.R = self.R[0:max_users, 0:max_items]
+        self.R_mask = self.R_mask[0:max_users, 0:max_items]
+        self.num_users = self.R.shape[0]
+        self.num_items = self.R.shape[1]
+        self.item_genres = self.item_genres[0:self.num_items]
+        self.item_titles = self.item_titles[0:self.num_items]
+        self.user_indexes = np.array(range(self.R.shape[0]))  # order of selection of users to recommend to
+        np.random.shuffle(self.user_indexes)  # iterate through users randomly when selecting the next user
+
+        self.arm_feature_dim = self.get_arm_feature_dim()
+
+        print("Shrinked rating matrix from {} to {}.".format(self.orig_R.shape, self.R.shape))
+        print("\nAfter shrinking:")
+        self.get_statistics()
+
+
     def get_statistics(self):
         """
         Calculates various statistics about given matrix.

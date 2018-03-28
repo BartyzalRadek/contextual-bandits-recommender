@@ -4,6 +4,7 @@ import numpy as np
 class LinUCB:
     def __init__(self, alpha, dataset, max_items=500):
         self.dataset = dataset
+        self.dataset.shrink(max_items)
         self.alpha = alpha
         self.d = dataset.arm_feature_dim
         self.b = np.zeros(shape=(dataset.num_items, self.d))
@@ -15,7 +16,7 @@ class LinUCB:
         # More efficient way to create array of identity matrices of length num_items
         print("Initializing matrix A of shape {} which will require {}MB of memory.".format(self.A.shape, 8*self.A.size/1e6))
         self.A = np.tile(np.identity(self.d, dtype=self.A.dtype), (dataset.num_items, 1))
-        print("Initialized matrix A of shape", self.A.shape)
+        print("LinUCB successfully initialized.")
 
     def choose_arm(self, t):
         A = self.A
