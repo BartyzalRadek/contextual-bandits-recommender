@@ -116,12 +116,12 @@ class MovieLens:
         return self.R
 
     def recommend(self, user_id, item_id):
-        MIN_REWARD = 0.05 # Minimal possible awarded reward
+        MIN_PROBABILITY = 0.05 # Minimal possible awarded reward
 
         if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
             return 1  # This will be exploited, don't recommend thing the user has already liked.
         elif self.R[user_id, item_id] == self.NEGATIVE_RATING_VAL:
-            return MIN_REWARD
+            return -1
         else:
             item_genres = self.item_genres[item_id]
             user_ratings = self.R[user_id]
@@ -145,11 +145,12 @@ class MovieLens:
 
             # how much user user_id likes the genre of the recommended item item_id
             result_genre_likability = np.average(genre_likabilities)
-            if result_genre_likability <= 0:
+            binomial_reward_probability = result_genre_likability
+            if binomial_reward_probability <= 0:
                 #print("User={}, item={}, genre likability={}".format(user_id, item_id, result_genre_likability))
-                result_genre_likability = MIN_REWARD  # this could be replaced by small probability
+                binomial_reward_probability = MIN_PROBABILITY # this could be replaced by small probability
 
-            approx_rating = np.random.binomial(n=1, p=result_genre_likability)  # Bernoulli coin toss
+            approx_rating = np.random.binomial(n=1, p=binomial_reward_probability)  # Bernoulli coin toss
 
             if approx_rating == 1:
                 self.R[user_id, item_id] = self.POSITIVE_RATING_VAL
