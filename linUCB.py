@@ -7,6 +7,7 @@ class LinUCB:
     def __init__(self, alpha, dataset, max_items=500):
         self.dataset = dataset
         self.dataset.shrink(max_items)
+        self.dataset.add_random_ratings(num_to_each_user=5)
         self.alpha = alpha
         self.d = dataset.arm_feature_dim
         self.b = np.zeros(shape=(dataset.num_items, self.d))
