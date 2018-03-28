@@ -1,11 +1,17 @@
 from _commons import warn, error, create_dir_path
 import numpy as np
 import time
+from movielens import MovieLens
 
 
 class LinUCB:
-    def __init__(self, alpha, dataset, max_items=500):
-        self.dataset = dataset
+    def __init__(self, alpha, dataset=None, max_items=500):
+        if dataset is None:
+            self.dataset = MovieLens(variant='ml-100k',
+                                     pos_rating_threshold=4,
+                                     data_augmentation_mode='binary_unknown')
+        else:
+            self.dataset = dataset
         self.dataset.shrink(max_items)
         self.dataset.add_random_ratings(num_to_each_user=5)
         self.alpha = alpha
@@ -50,7 +56,7 @@ class LinUCB:
 
         return r_t
 
-    def run_epoch(self):
+    def run_epoch(self,verbosity=2):
         """
         Call choose_arm() for each user in the dataset.
         :return: Average received reward.
@@ -62,13 +68,14 @@ class LinUCB:
             user_id = self.dataset.get_next_user()
             rewards[i] = self.choose_arm(user_id)
             time_i = time.time() - start_time_i
-            print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users, rewards[i], time_i))
+            if verbosity >= 2:
+                print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users, rewards[i], time_i))
 
         total_time = time.time() - start_time
         avg_reward = np.average(rewards)
         return avg_reward, total_time
 
-    def run(self, num_epochs):
+    def run(self, num_epochs, verbosity=1):
         """
         Runs run_epoch() num_epoch times.
         :param num_epochs: Number of epochs = iterating over all users.
@@ -76,7 +83,8 @@ class LinUCB:
         """
         avg_rewards = np.zeros(shape=(num_epochs,), dtype=float)
         for i in range(num_epochs):
-            avg_rewards[i], total_time = self.run_epoch()
+            avg_rewards[i], total_time = self.run_epoch(verbosity)
 
-            print("Finished epoch {}/{} with avg reward {} in {}s".format(i, num_epochs, avg_rewards[i], total_time))
+            if verbosity >= 1:
+                print("Finished epoch {}/{} with avg reward {} in {}s".format(i, num_epochs, avg_rewards[i], total_time))
         return avg_rewards
