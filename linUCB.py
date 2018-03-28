@@ -41,6 +41,9 @@ class LinUCB:
         arm_features = self.dataset.get_features_of_current_arms(t=t)
         p_t = np.zeros(shape=(arm_features.shape[0],), dtype=float)
         p_t -= 9999 # I never want to select the already rated items
+
+        unknown_item_ids = range(self.dataset.num_items) # If I let it choose previously chosen arms, it ends up choosing the same ones all the time
+
         for a in unknown_item_ids: # iterate over all arms = items that that user has not rated yet
             x_ta = arm_features[a]
             A_a_inv = np.linalg.inv(A[a])
