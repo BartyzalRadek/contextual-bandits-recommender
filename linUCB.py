@@ -42,12 +42,11 @@ class LinUCB:
         item_ids = unknown_item_ids
 
         if self.allow_selecting_known_arms:
-            item_ids = range(
-                self.dataset.num_items)  # If I let it choose previously chosen arms, it ends up choosing the same ones all the time
+            item_ids = range(self.dataset.num_items)
             p_t += 9999
 
         for a in item_ids:  # iterate over all arms
-            x_ta = arm_features[a].reshape(arm_features[a].shape[0], 1) # make a column vector
+            x_ta = arm_features[a].reshape(arm_features[a].shape[0], 1)  # make a column vector
             A_a_inv = np.linalg.inv(A[a])
             theta_a = A_a_inv.dot(b[a])
             p_t[a] = theta_a.T.dot(x_ta) + self.alpha * np.sqrt(x_ta.T.dot(A_a_inv).dot(x_ta))
@@ -63,14 +62,14 @@ class LinUCB:
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
-        #if t == self.monitored_user:
+        # if t == self.monitored_user:
         print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
         if r_t == 1:
             self.monitored_user = np.random.choice(self.users_with_unrated_items)
 
-        x_t_at = arm_features[a_t].reshape(arm_features[a_t].shape[0], 1) # make a column vector
+        x_t_at = arm_features[a_t].reshape(arm_features[a_t].shape[0], 1)  # make a column vector
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
-        b[a_t] = b[a_t] + r_t * x_t_at.flatten() # turn it back into an array because b[a_t] is an array
+        b[a_t] = b[a_t] + r_t * x_t_at.flatten()  # turn it back into an array because b[a_t] is an array
 
         return r_t
 
@@ -85,7 +84,7 @@ class LinUCB:
         for i in range(self.dataset.num_users):
             start_time_i = time.time()
             user_id = self.dataset.get_next_user()
-            #user_id = 1
+            # user_id = 1
             unknown_item_ids = self.dataset.get_uknown_items_of_user(user_id)
 
             if self.allow_selecting_known_arms == False:
@@ -94,7 +93,8 @@ class LinUCB:
 
                 if unknown_item_ids.size == 0:
                     print("User {} has no more unknown ratings, skipping him.".format(user_id))
-                    self.users_with_unrated_items = self.users_with_unrated_items[self.users_with_unrated_items != user_id]
+                    self.users_with_unrated_items = self.users_with_unrated_items[
+                        self.users_with_unrated_items != user_id]
                     continue
 
             rewards.append(self.choose_arm(user_id, unknown_item_ids))
