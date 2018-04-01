@@ -4,7 +4,7 @@ import time
 from movielens import MovieLens
 
 
-class LinUCB:
+class HybridLinUCB:
     def __init__(self, alpha, dataset=None, max_items=500, allow_selecting_known_arms=True):
         if dataset is None:
             self.dataset = MovieLens(variant='ml-100k',
@@ -60,10 +60,21 @@ class LinUCB:
             x_ta = arm_features[a].reshape(-1, 1) # make a column vector
             z_ta = self.dataset.item_genres[a].reshape(-1,1) # make a column vector
             A_a_inv = np.linalg.inv(A[a])
-            theta_a = A_a_inv.dot(b[a] - B[a].dot(beta))
+            b_a = b[a].reshape(-1,1) # column vector
+
+            theta_a = A_a_inv.dot(b_a - B[a].dot(beta))
             s_ta = z_ta.T.dot(A0_inv).dot(z_ta) - 2*z_ta.T.dot(A0_inv).dot(B[a].T).dot(A_a_inv).dot(x_ta)
             s_ta += x_ta.T.dot(A_a_inv).dot(x_ta) + x_ta.T.dot(A_a_inv).dot(B[a]).dot(A0_inv).dot(B[a].T).dot(A_a_inv).dot(x_ta)
-            p_t[a] = z_ta.T.dot(beta) + x_ta.T.dot(theta_a) + self.alpha*np.sqrt(s_ta)
+            """
+            print('theta_a:', theta_a.shape)
+            print('b_a:', b_a.shape)
+            print('B[a]:', B[a].shape)
+            print('z_ta:', z_ta.shape)
+            print('beta:', beta.shape)
+            print('x_ta:', x_ta.shape)
+            print('b0:', b0.shape)
+            """
+            p_t[a] = (z_ta.T.dot(beta) + x_ta.T.dot(theta_a)).flatten() + self.alpha*np.sqrt(s_ta)
 
         max_p_t = np.max(p_t)
         if max_p_t <= 0:
@@ -86,12 +97,15 @@ class LinUCB:
         A_at_inv = np.linalg.inv(A[a_t])
 
         A0 = A0 + B[a_t].T.dot(A_at_inv).dot(B[a_t])
-        b0 = b0 + B[a_t].T.dot(A_at_inv).dot(b[a_t])
+        b0 = b0 + B[a_t].T.dot(A_at_inv).dot(b[a_t].reshape(-1,1))
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
         B[a_t] = B[a_t] + x_t_at.dot(z_t_at.T)
         b[a_t] = b[a_t] + r_t * x_t_at.flatten() # turn it back into an array because b[a_t] is an array
         A0 = A0 + z_t_at.dot(z_t_at.T) - B[a_t].T.dot(A_at_inv).dot(B[a_t])
-        b0 = b0 + r_t*z_t_at - B[a_t].T.dot(A_at_inv).dot(b[a_t])
+        b0 = b0 + r_t*z_t_at - B[a_t].T.dot(A_at_inv).dot(b[a_t].reshape(-1,1))
+
+        self.A0 = A0
+        self.b0 = b0
         return r_t
 
     def run_epoch(self, verbosity=2):
