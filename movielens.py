@@ -241,6 +241,8 @@ class MovieLens:
         user_pos_rats_std = np.std(user_pos_rats)
         user_neg_rats_std = np.std(user_neg_rats)
 
+        print('Number of users:          ', R.shape[0])
+        print('Number of items:          ', R.shape[1])
         print('Total number of ratings:  ', total_rats)
         print('Known ratings:            ', no_rats)
         print('Known positive ratings:   ', no_pos_rats)

@@ -5,7 +5,7 @@ from movielens import MovieLens
 
 
 class LinUCB:
-    def __init__(self, alpha, dataset=None, max_items=500):
+    def __init__(self, alpha, dataset=None, max_items=500, allow_selecting_known_arms=True):
         if dataset is None:
             self.dataset = MovieLens(variant='ml-100k',
                                      pos_rating_threshold=4,
@@ -17,17 +17,14 @@ class LinUCB:
         self.alpha = alpha
         self.users_with_unrated_items = np.array(range(self.dataset.num_users))
         self.monitored_user = np.random.choice(self.users_with_unrated_items)
-        self.d = dataset.arm_feature_dim
-        self.b = np.zeros(shape=(dataset.num_items, self.d))
-
-        self.A = np.zeros(shape=(dataset.num_items, self.d, self.d)) # set of arms is not changing over time
-        #for a in range(self.A.shape[0]):
-        #    self.A[a] = np.identity(self.d, dtype=self.A.dtype)
+        self.allow_selecting_known_arms = allow_selecting_known_arms
+        self.d = self.dataset.arm_feature_dim
+        self.b = np.zeros(shape=(self.dataset.num_items, self.d))
 
         # More efficient way to create array of identity matrices of length num_items
-        print("Initializing matrix A of shape {} which will require {}MB of memory.".format(self.A.shape,
-                                                                                            8 * self.A.size / 1e6))
-        self.A = np.repeat(np.identity(self.d, dtype=self.A.dtype)[np.newaxis, :, :], dataset.num_items, axis=0)
+        print("\nInitializing matrix A of shape {} which will require {}MB of memory."
+              .format((self.dataset.num_items, self.d, self.d), 8 * self.dataset.num_items * self.d * self.d / 1e6))
+        self.A = np.repeat(np.identity(self.d, dtype=float)[np.newaxis, :, :], self.dataset.num_items, axis=0)
         print("\nLinUCB successfully initialized.")
 
     def choose_arm(self, t, unknown_item_ids):
@@ -41,11 +38,15 @@ class LinUCB:
         b = self.b
         arm_features = self.dataset.get_features_of_current_arms(t=t)
         p_t = np.zeros(shape=(arm_features.shape[0],), dtype=float)
-        p_t -= 9999 # I never want to select the already rated items
+        p_t -= 9999  # I never want to select the already rated items
+        item_ids = unknown_item_ids
 
-        unknown_item_ids = range(self.dataset.num_items) # If I let it choose previously chosen arms, it ends up choosing the same ones all the time
+        if self.allow_selecting_known_arms:
+            item_ids = range(
+                self.dataset.num_items)  # If I let it choose previously chosen arms, it ends up choosing the same ones all the time
+            p_t += 9999
 
-        for a in unknown_item_ids: # iterate over all arms = items that that user has not rated yet
+        for a in item_ids:  # iterate over all arms
             x_ta = arm_features[a]
             A_a_inv = np.linalg.inv(A[a])
             theta_a = A_a_inv.dot(b[a])
@@ -62,11 +63,10 @@ class LinUCB:
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
-        if t == self.monitored_user:
-            print("User {} choosing item {} with reward {}".format(t, a_t, r_t))
-            if r_t == 1:
-                self.monitored_user = np.random.choice(self.users_with_unrated_items)
-
+        #if t == self.monitored_user:
+        print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
+        if r_t == 1:
+            self.monitored_user = np.random.choice(self.users_with_unrated_items)
 
         x_t_at = arm_features[a_t]
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
@@ -74,7 +74,7 @@ class LinUCB:
 
         return r_t
 
-    def run_epoch(self,verbosity=2):
+    def run_epoch(self, verbosity=2):
         """
         Call choose_arm() for each user in the dataset.
         :return: Average received reward.
@@ -85,19 +85,22 @@ class LinUCB:
         for i in range(self.dataset.num_users):
             start_time_i = time.time()
             user_id = self.dataset.get_next_user()
-            if user_id not in self.users_with_unrated_items:
-                continue
-
             unknown_item_ids = self.dataset.get_uknown_items_of_user(user_id)
-            if unknown_item_ids.size == 0:
-                print("User {} has no more unknown ratings, skipping him.".format(user_id))
-                self.users_with_unrated_items = self.users_with_unrated_items[self.users_with_unrated_items != user_id]
-                continue
+
+            if self.allow_selecting_known_arms == False:
+                if user_id not in self.users_with_unrated_items:
+                    continue
+
+                if unknown_item_ids.size == 0:
+                    print("User {} has no more unknown ratings, skipping him.".format(user_id))
+                    self.users_with_unrated_items = self.users_with_unrated_items[self.users_with_unrated_items != user_id]
+                    continue
 
             rewards.append(self.choose_arm(user_id, unknown_item_ids))
             time_i = time.time() - start_time_i
             if verbosity >= 2:
-                print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users, rewards[i], time_i))
+                print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users,
+                                                                                       rewards[i], time_i))
 
         total_time = time.time() - start_time
         avg_reward = np.average(np.array(rewards))
@@ -115,5 +118,6 @@ class LinUCB:
             avg_rewards[i], total_time = self.run_epoch(verbosity)
 
             if verbosity >= 1:
-                print("Finished epoch {}/{} with avg reward {} in {}s".format(i, num_epochs, avg_rewards[i], total_time))
+                print(
+                    "Finished epoch {}/{} with avg reward {} in {}s".format(i, num_epochs, avg_rewards[i], total_time))
         return avg_rewards
