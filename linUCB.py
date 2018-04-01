@@ -27,7 +27,7 @@ class LinUCB:
         self.A = np.repeat(np.identity(self.d, dtype=float)[np.newaxis, :, :], self.dataset.num_items, axis=0)
         print("\nLinUCB successfully initialized.")
 
-    def choose_arm(self, t, unknown_item_ids):
+    def choose_arm(self, t, unknown_item_ids, verbosity):
         """
         Choose an arm to pull = item to recommend to user t that he did not rate yet.
         :param t: User_id of user to recommend to.
@@ -62,10 +62,8 @@ class LinUCB:
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
-        # if t == self.monitored_user:
-        print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
-        if r_t == 1:
-            self.monitored_user = np.random.choice(self.users_with_unrated_items)
+        if verbosity >= 2:
+            print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
 
         x_t_at = arm_features[a_t].reshape(arm_features[a_t].shape[0], 1)  # make a column vector
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
@@ -97,7 +95,7 @@ class LinUCB:
                         self.users_with_unrated_items != user_id]
                     continue
 
-            rewards.append(self.choose_arm(user_id, unknown_item_ids))
+            rewards.append(self.choose_arm(user_id, unknown_item_ids, verbosity))
             time_i = time.time() - start_time_i
             if verbosity >= 2:
                 print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users,

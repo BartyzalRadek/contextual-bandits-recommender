@@ -32,7 +32,7 @@ class HybridLinUCB:
         self.A = np.repeat(np.identity(self.d, dtype=float)[np.newaxis, :, :], self.dataset.num_items, axis=0)
         print("\nLinUCB successfully initialized.")
 
-    def choose_arm(self, t, unknown_item_ids):
+    def choose_arm(self, t, unknown_item_ids, verbosity):
         """
         Choose an arm to pull = item to recommend to user t that he did not rate yet.
         :param t: User_id of user to recommend to.
@@ -65,15 +65,16 @@ class HybridLinUCB:
             theta_a = A_a_inv.dot(b_a - B[a].dot(beta))
             s_ta = z_ta.T.dot(A0_inv).dot(z_ta) - 2*z_ta.T.dot(A0_inv).dot(B[a].T).dot(A_a_inv).dot(x_ta)
             s_ta += x_ta.T.dot(A_a_inv).dot(x_ta) + x_ta.T.dot(A_a_inv).dot(B[a]).dot(A0_inv).dot(B[a].T).dot(A_a_inv).dot(x_ta)
-            """
-            print('theta_a:', theta_a.shape)
-            print('b_a:', b_a.shape)
-            print('B[a]:', B[a].shape)
-            print('z_ta:', z_ta.shape)
-            print('beta:', beta.shape)
-            print('x_ta:', x_ta.shape)
-            print('b0:', b0.shape)
-            """
+
+            if verbosity >= 3:
+                print('theta_a:', theta_a.shape)
+                print('b_a:', b_a.shape)
+                print('B[a]:', B[a].shape)
+                print('z_ta:', z_ta.shape)
+                print('beta:', beta.shape)
+                print('x_ta:', x_ta.shape)
+                print('b0:', b0.shape)
+
             p_t[a] = (z_ta.T.dot(beta) + x_ta.T.dot(theta_a)).flatten() + self.alpha*np.sqrt(s_ta)
 
         max_p_t = np.max(p_t)
@@ -87,10 +88,8 @@ class HybridLinUCB:
 
         r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
 
-        #if t == self.monitored_user:
-        print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
-        if r_t == 1:
-            self.monitored_user = np.random.choice(self.users_with_unrated_items)
+        if verbosity >= 2:
+            print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
 
         x_t_at = arm_features[a_t].reshape(-1, 1) # make a column vector
         z_t_at = self.dataset.item_genres[a_t].reshape(-1, 1) # make a column vector
@@ -130,7 +129,7 @@ class HybridLinUCB:
                     self.users_with_unrated_items = self.users_with_unrated_items[self.users_with_unrated_items != user_id]
                     continue
 
-            rewards.append(self.choose_arm(user_id, unknown_item_ids))
+            rewards.append(self.choose_arm(user_id, unknown_item_ids, verbosity))
             time_i = time.time() - start_time_i
             if verbosity >= 2:
                 print("Choosing arm for user {}/{} ended with reward {} in {}s".format(i, self.dataset.num_users,
