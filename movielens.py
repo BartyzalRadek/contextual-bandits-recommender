@@ -116,12 +116,12 @@ class MovieLens:
         return self.R
 
     def recommend(self, user_id, item_id):
-        MIN_PROBABILITY = 0.05 # Minimal possible awarded reward
+        MIN_PROBABILITY = 0.05 # Minimal probability to like an item - adds stochasticity
 
         if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
             return 1  # This will be exploited, don't recommend thing the user has already liked.
         elif self.R[user_id, item_id] == self.NEGATIVE_RATING_VAL:
-            return -1
+            return 0
         else:
             item_genres = self.item_genres[item_id]
             user_ratings = self.R[user_id]
@@ -158,7 +158,7 @@ class MovieLens:
                 self.R[user_id, item_id] = self.NEGATIVE_RATING_VAL
 
             #return approx_rating
-            return result_genre_likability
+            return approx_rating
 
     def get_features_of_current_arms(self, t):
         """

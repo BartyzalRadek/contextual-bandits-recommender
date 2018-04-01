@@ -13,7 +13,7 @@ class LinUCB:
         else:
             self.dataset = dataset
         self.dataset.shrink(max_items)
-        self.dataset.add_random_ratings(num_to_each_user=5)
+        self.dataset.add_random_ratings(num_to_each_user=3)
         self.alpha = alpha
         self.users_with_unrated_items = np.array(range(self.dataset.num_users))
         self.monitored_user = np.random.choice(self.users_with_unrated_items)
@@ -47,7 +47,7 @@ class LinUCB:
             p_t += 9999
 
         for a in item_ids:  # iterate over all arms
-            x_ta = arm_features[a]
+            x_ta = arm_features[a].reshape(arm_features[a].shape[0], 1) # make a column vector
             A_a_inv = np.linalg.inv(A[a])
             theta_a = A_a_inv.dot(b[a])
             p_t[a] = theta_a.T.dot(x_ta) + self.alpha * np.sqrt(x_ta.T.dot(A_a_inv).dot(x_ta))
@@ -68,9 +68,9 @@ class LinUCB:
         if r_t == 1:
             self.monitored_user = np.random.choice(self.users_with_unrated_items)
 
-        x_t_at = arm_features[a_t]
+        x_t_at = arm_features[a_t].reshape(arm_features[a_t].shape[0], 1) # make a column vector
         A[a_t] = A[a_t] + x_t_at.dot(x_t_at.T)
-        b[a_t] = b[a_t] + r_t * x_t_at
+        b[a_t] = b[a_t] + r_t * x_t_at.flatten() # turn it back into an array because b[a_t] is an array
 
         return r_t
 
@@ -85,6 +85,7 @@ class LinUCB:
         for i in range(self.dataset.num_users):
             start_time_i = time.time()
             user_id = self.dataset.get_next_user()
+            #user_id = 1
             unknown_item_ids = self.dataset.get_uknown_items_of_user(user_id)
 
             if self.allow_selecting_known_arms == False:
