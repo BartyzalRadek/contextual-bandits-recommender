@@ -94,7 +94,7 @@ The solution is reached by a simple ridge regression.
 \begin{figure}[h]
  \centering
  \includegraphics[scale=0.9]{img/LinUCB_alg}
- \caption{LinUCB algorithm with incrementally updating parameter matrices.}
+ \caption{LinUCB algorithm with incrementally updating parameter matrices.\cite{cit:paper}}
  \label{fig:linUCB_alg}
 \end{figure}
 
@@ -120,28 +120,63 @@ $$
 \begin{figure}[h!]
  \centering
  \includegraphics[scale=0.9]{img/HybridLinUCB_alg}
- \caption{HybridLinUCB algorithm with incrementally updating parameter matrices.}
+ \caption{HybridLinUCB algorithm with incrementally updating parameter matrices.\cite{cit:paper}}
  \label{fig:HybridlinUCB_alg}
 \end{figure}
 
 
 \section{Implementation}\label{sec:impl}
+I have implemented both algorithms using the paper's notation for easy readability. The implementation does not support changing the arm set dynamically at the moment which leads to increased performance. The full project implementation can be found at \cite{cit:impl}.
+
+Features in $x_{t,a}$ are a concatenation of features of user $t$ and item $a$ at the current time.
+
+\begin{itemize}
+\item user features = his ratings of all items = $R_u$
+\item item features = movie genres = array of 1/0 describing whether the movie belongs to a genre. There are 19 genres.
+\item $x_{t,a}$ = user features concatenated with item features
+\item $z_{t,a}$ = only article features = genre vector
+\end{itemize}
+
 
 
 
 \section{Experiments}\label{sec:exp}
 
+\subsection{Data preprocessing}
+I have decided to use the MovieLens 100k dataset. 
+It has 100 000 ratings, 1000 users and 1700 movies. \cite{cit:ml}
+
+Due to the computational requirements I have taken a small subset of the whole dataset containing 100 items and 56 users. To ensure that all users have at least some ratings I have randomly added 3 ratings to each user.
+
+As is customary in the recommendation world I have binarized the ratings from a scale of 1-5 to:
+
+\begin{itemize}
+\item 1 if the rating is 4 or larger = positive rating
+\item -1 if the rating is smaller than 4 = negative rating
+\item 0 = unknown rating
+\end{itemize}
+
+I have decided to keep the negative ratings separated from the unknown ones because I will need them to model the unknown user ratings.
+
+\subsection{Modeling the user behavior}
+The paper describes a sophisticated method to evaluate the algorithms offline which are interesting nevertheless such a procedure is out of scope of this project. Therefore I have decide to use a simple user model predicting a positive or negative rating of a yet unseen item.
+
+Let item $a$ be recommended to user $u$.
+If the user $u$ has already rated the item $a$, the returned reward will be 1 for positive rating or 0 for negative rating. Instead of these fixed values a Bernoulli distribution with high probability of 1/0 can be used to calculate the reward.
+
+If the user $u$ has not rated the item $i$  yet the reward will be sampled from a Bernoulli distribution with $p$ equal to how much the user likes the genre of item $i$. Likability of a genre $g_a$ is calculated as a ratio of positive ratings of items belonging to genre $g_a$ to a number of negative ratings of items belonging to $g_a$. Only ratings by user $u$ are counted. If item $i$ belongs to multiple genres the resulting likability is calculated as an average of all the item $i$ genre likabilities.
+
 \begin{figure}[h]
  \centering
- \includegraphics[width=\columnwidth]{img/LinUCB-100items-50epochs}
+ \includegraphics[scale=0.5]{img/LinUCB-100items-50epochs}
  \caption{LinUCB trained on 100 items and 56 users for 50 epochs.}
  \label{fig:linUCB-100it}
 \end{figure}
 
 \begin{figure}[h]
  \centering
- \includegraphics[width=\columnwidth]{img/HybridLinUCB-100items-50epochs}
- \caption{HybridLinUCB trained on 100 items and 56 users for 50 epochs.}
+ \includegraphics[scale=0.5]{img/HybridLinUCB-100items-50epochs}
+ \caption{HybridLinUCB trained on 100 items and 56 users for 50 epochs. }
  \label{fig:HybridlinUCB-100it}
 \end{figure}
 
@@ -152,10 +187,16 @@ $$
 
 \begin{thebibliography}{0}
 
-  \bibitem[1]{cit:ots} Li, Lihong, et al. "A contextual-bandit approach to personalized news article recommendation." Proceedings of the 19th international conference on World wide web. ACM, 2010. Accessible from: \url{https://arxiv.org/abs/1003.0146}
+  \bibitem[1]{cit:paper} Li, Lihong, et al. "A contextual-bandit approach to personalized news article recommendation." Proceedings of the 19th international conference on World wide web. ACM, 2010. Accessible from: \url{https://arxiv.org/abs/1003.0146}
   
-  \bibitem[2]{cit:ots} Project implementation at: \url{https://github.com/BartyzalRadek/contextual-bandits-recommender}
+  \bibitem[2]{cit:impl} Project implementation at: \url{https://github.com/BartyzalRadek/contextual-bandits-recommender}
   
+  \bibitem[3]{cit:ml} F. Maxwell Harper and Joseph A. Konstan. 2015. The MovieLens Datasets:
+History and Context. ACM Transactions on Interactive Intelligent
+Systems (TiiS) 5, 4, Article 19 (December 2015), 19 pages.
+DOI=http://dx.doi.org/10.1145/2827872 Accessible from: \url{https://grouplens.org/datasets/movielens/100k/}
+
+
 
 \end{thebibliography}
 
