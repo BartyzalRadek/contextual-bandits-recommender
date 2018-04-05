@@ -115,13 +115,25 @@ class MovieLens:
             # print('R[u]:', self.R[u])
         return self.R
 
-    def recommend(self, user_id, item_id):
+    def recommend(self, user_id, item_id, fixed_rewards=True, prob_reward_p=0.9):
+        """
+        Returns reward and updates rating maatrix self.R.
+        :param fixed_rewards: Whether to always return 1/0 rewards for already rated items.
+        :param prob_reward_p: Probability of returning the correct reward for already rated item.
+        :return: Reward = either 0 or 1.
+        """
         MIN_PROBABILITY = 0.05 # Minimal probability to like an item - adds stochasticity
 
         if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
-            return 1  # This will be exploited, don't recommend thing the user has already liked.
+            if fixed_rewards:
+                return 1
+            else:
+                return np.random.binomial(n=1, p=prob_reward_p)  # Bernoulli coin toss
         elif self.R[user_id, item_id] == self.NEGATIVE_RATING_VAL:
-            return 0
+            if fixed_rewards:
+                return 0
+            else:
+                return np.random.binomial(n=1, p=1-prob_reward_p)  # Bernoulli coin toss
         else:
             item_genres = self.item_genres[item_id]
             user_ratings = self.R[user_id]
