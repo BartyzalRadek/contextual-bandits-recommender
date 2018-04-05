@@ -122,7 +122,7 @@ class MovieLens:
         :param prob_reward_p: Probability of returning the correct reward for already rated item.
         :return: Reward = either 0 or 1.
         """
-        MIN_PROBABILITY = 0.05 # Minimal probability to like an item - adds stochasticity
+        MIN_PROBABILITY = 0 # Minimal probability to like an item - adds stochasticity
 
         if self.R[user_id, item_id] == self.POSITIVE_RATING_VAL:
             if fixed_rewards:
