@@ -169,24 +169,45 @@ If the user $u$ has already rated the item $a$, the returned reward will be 1 fo
 
 If the user $u$ has not rated the item $i$  yet the reward will be sampled from a Bernoulli distribution with $p$ equal to how much the user likes the genre of item $i$. Likability of a genre $g_a$ is calculated as a ratio of positive ratings of items belonging to genre $g_a$ to a number of negative ratings of items belonging to $g_a$. Only ratings by user $u$ are counted. If item $i$ belongs to multiple genres the resulting likability is calculated as an average of all the item $i$ genre likabilities.
 
-\subsection{Fixed rewards}
-In this experiment I have simply run the implemented algorithm with settings described in the previous chapters for 50 epochs. The results can be seen in Figures \ref{fig:linUCB-100it} and \ref{fig:HybridlinUCB-100it}. 
+\subsection{Experiment 1: Fixed rewards}
+In this experiment I have simply run the implemented algorithm with settings described in the previous chapters for 50 epochs. The results can be seen in Figures \ref{fig:linUCB-fixed} and \ref{fig:HybridlinUCB-fixed}. 
 
 
 \begin{figure}[h!]
  \centering
- \includegraphics[scale=0.5]{img/LinUCB-100items-50epochs}
- \caption{LinUCB trained on 100 items and 56 users for 50 epochs.}
- \label{fig:linUCB-100it}
+ \includegraphics[scale=0.5]{img/LinUCB-fixed}
+ \caption{LinUCB with fixed rewards for already rated items.}
+ \label{fig:linUCB-fixed}
 \end{figure}
 
 \begin{figure}[h!]
  \centering
- \includegraphics[scale=0.5]{img/HybridLinUCB-100items-50epochs}
- \caption{HybridLinUCB trained on 100 items and 56 users for 50 epochs. }
- \label{fig:HybridlinUCB-100it}
+ \includegraphics[scale=0.5]{img/HybridLinUCB-fixed}
+ \caption{HybridLinUCB with fixed rewards for already rated items. }
+ \label{fig:HybridlinUCB-fixed}
 \end{figure}
 
+
+
+\subsection{Experiment 2: Stochastic rewards}
+In this experiment I have modified the user model behavior when giving reward for already rated items.
+If the previous rating was positive the reward will be sampled from Bernoulli distribution with $p=0.9$, otherwise $p=0.1$.
+All the other parameters remained the same. The results can be seen in Figures \ref{fig:linUCB-stochastic} and \ref{fig:HybridlinUCB-stochastic}. 
+
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.5]{img/LinUCB-stochastic}
+ \caption{LinUCB with stochastic rewards for already rated items.}
+ \label{fig:linUCB-stochastic}
+\end{figure}
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.5]{img/HybridLinUCB-stochastic}
+ \caption{HybridLinUCB with stochastic rewards for already rated items. }
+ \label{fig:HybridlinUCB-stochastic}
+\end{figure}
 
 
 \section{Conclusion}\label{sec:conclusion}
