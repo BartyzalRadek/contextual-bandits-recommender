@@ -61,7 +61,7 @@ users based on contextual information about the users and articles,
 while simultaneously adapting its article-selection strategy.
 
 \section{Theory}\label{sec:theory}
-Both algorithms are based on upper confidence bound algorithm (UCB) that uses a smarter way to balance
+Both algorithms are based on upper confidence bound (UCB) method that uses a smarter way to balance
 exploration and exploitation than a simple $\epsilon-greedy$ strategy. 
 Specifically, in trial $t$, these algorithms
 estimate both the mean payoff $\mu_{t,a}$ of each arm $a$ as well
@@ -142,6 +142,8 @@ Features in $x_{t,a}$ are a concatenation of features of user $t$ and item $a$ a
 The algorithms are always run for a selected number of epochs.
 An epoch means that the algorithm has iteratively generated a single recommendation for each user in the dataset. The ordering of the users is random in each epoch.
 
+When there are multiple possible arms to choose from = their $p_t$ equals $max(p_t)$, final arm is selected randomly from such arms. 
+
 
 \section{Experiments}\label{sec:exp}
 
@@ -187,7 +189,9 @@ In this experiment I have simply run the implemented algorithm with settings des
  \label{fig:HybridlinUCB-fixed}
 \end{figure}
 
+As can be observed LinUCB quickly reaches the exploitation phase which is especially easy since it just needs to find 1 item that returns positive reward for each user and then select it all the time.
 
+HybridLinUCB on the other hand is exploring more and therefore has a slower increase in average reward per epoch, but achieves similar results in the end.
 
 \subsection{Experiment 2: Stochastic rewards}
 In this experiment I have modified the user model behavior when giving reward for already rated items.
@@ -204,13 +208,16 @@ All the other parameters remained the same. The results can be seen in Figures \
 
 \begin{figure}[h!]
  \centering
- \includegraphics[scale=0.5]{img/HybridLinUCB-stochastic}
+ \includegraphics[scale=0.5]{img/HybridLinUCB-stochastic-100}
  \caption{HybridLinUCB with stochastic rewards for already rated items. }
  \label{fig:HybridlinUCB-stochastic}
 \end{figure}
 
+LinUCB is again trying to exploit quite quickly but its progress is hindered by the noise, nevertheless it manages to stay around the near optimal 0.85 in the end.
 
-\section{Conclusion}\label{sec:conclusion}
+HybridLinUCB is again exploring more and the noisy rewards are slowing it down even more, that is why I let it run for 100 epochs. It can be seen that it ends up oscillating around slightly worse 0.8 average reward.
+
+%\section{Conclusion}\label{sec:conclusion}
 
 
 \begin{thebibliography}{0}
