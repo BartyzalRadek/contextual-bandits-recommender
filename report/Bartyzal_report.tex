@@ -89,7 +89,7 @@ $$
 \end{itemize}
 
 This model is called disjoint since the parameters are not shared among different arms.
-The solution is reached by a simple ridge regression.
+The solution is reached by a simple ridge regression and an algorithm allowing incremental updating of the parameter matrices can be seen in Figure \ref{fig:linUCB_alg}.
 
 \begin{figure}[h]
  \centering
@@ -117,7 +117,9 @@ $$
 \item $\beta^*$ = an unknown coefficient vector common to all arms
 \end{itemize}
 
-\begin{figure}[h!]
+The algorithm can be seen in Figure \ref{fig:HybridlinUCB_alg}.
+
+\begin{figure}
  \centering
  \includegraphics[scale=0.9]{img/HybridLinUCB_alg}
  \caption{HybridLinUCB algorithm with incrementally updating parameter matrices.\cite{cit:paper}}
@@ -137,7 +139,8 @@ Features in $x_{t,a}$ are a concatenation of features of user $t$ and item $a$ a
 \item $z_{t,a}$ = only article features = genre vector
 \end{itemize}
 
-
+The algorithms are always run for a selected number of epochs.
+An epoch means that the algorithm has iteratively generated a single recommendation for each user in the dataset. The ordering of the users is random in each epoch.
 
 
 \section{Experiments}\label{sec:exp}
@@ -166,14 +169,18 @@ If the user $u$ has already rated the item $a$, the returned reward will be 1 fo
 
 If the user $u$ has not rated the item $i$  yet the reward will be sampled from a Bernoulli distribution with $p$ equal to how much the user likes the genre of item $i$. Likability of a genre $g_a$ is calculated as a ratio of positive ratings of items belonging to genre $g_a$ to a number of negative ratings of items belonging to $g_a$. Only ratings by user $u$ are counted. If item $i$ belongs to multiple genres the resulting likability is calculated as an average of all the item $i$ genre likabilities.
 
-\begin{figure}[h]
+\subsection{Fixed rewards}
+In this experiment I have simply run the implemented algorithm with settings described in the previous chapters for 50 epochs. The results can be seen in Figures \ref{fig:linUCB-100it} and \ref{fig:HybridlinUCB-100it}. 
+
+
+\begin{figure}[h!]
  \centering
  \includegraphics[scale=0.5]{img/LinUCB-100items-50epochs}
  \caption{LinUCB trained on 100 items and 56 users for 50 epochs.}
  \label{fig:linUCB-100it}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[h!]
  \centering
  \includegraphics[scale=0.5]{img/HybridLinUCB-100items-50epochs}
  \caption{HybridLinUCB trained on 100 items and 56 users for 50 epochs. }
