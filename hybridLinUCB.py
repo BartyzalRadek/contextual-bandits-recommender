@@ -5,7 +5,8 @@ from movielens import MovieLens
 
 
 class HybridLinUCB:
-    def __init__(self, alpha, dataset=None, max_items=500, allow_selecting_known_arms=True):
+    def __init__(self, alpha, dataset=None, max_items=500, allow_selecting_known_arms=True, fixed_rewards=True,
+                 prob_reward_p=0.9):
         if dataset is None:
             self.dataset = MovieLens(variant='ml-100k',
                                      pos_rating_threshold=4,
@@ -18,6 +19,8 @@ class HybridLinUCB:
         self.users_with_unrated_items = np.array(range(self.dataset.num_users))
         self.monitored_user = np.random.choice(self.users_with_unrated_items)
         self.allow_selecting_known_arms = allow_selecting_known_arms
+        self.fixed_rewards = fixed_rewards
+        self.prob_reward_p = prob_reward_p
 
         self.d = self.dataset.arm_feature_dim #interaction features specific to each user
         self.k = self.dataset.num_genres #raw article/user features = genres, location, age etc.
@@ -86,7 +89,9 @@ class HybridLinUCB:
         max_idxs = np.argwhere(p_t == max_p_t).flatten()
         a_t = np.random.choice(max_idxs)  # idx of article to recommend to user t
 
-        r_t = self.dataset.recommend(user_id=t, item_id=a_t)  # observed reward = 1/0 or probability of 1
+        # observed reward = 1/0
+        r_t = self.dataset.recommend(user_id=t, item_id=a_t,
+                                     fixed_rewards=self.fixed_rewards, prob_reward_p=self.prob_reward_p)
 
         if verbosity >= 2:
             print("User {} choosing item {} with p_t={} reward {}".format(t, a_t, p_t[a_t], r_t))
